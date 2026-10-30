@@ -7,21 +7,21 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Environment
+      - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget
 
-      - name: Download Toolchain Clang
+      - name: Clone Toolchain Clang
         run: |
           git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b.git clang
 
-      - name: Download Kernel Source Whyred
+      - name: Clone Kernel Source Whyred
         run: |
-          git clone --depth=1 https://github.com/stormbreaker-project/kernel_xiaomi_whyred.git -b twelve kernel
+          git clone --depth=1 https://github.com/stormbreaker-project/kernel_xiaomi_whyred.git -b twelve kernel || git clone --depth=1 https://github.com/stormbreaker-project/kernel_xiaomi_whyred.git kernel
 
       - name: Setup KernelSU-Next
         run: |
@@ -42,4 +42,3 @@ jobs:
         with:
           name: Whyred-KernelSU-Next-Image
           path: kernel/out/arch/arm64/boot/Image.gz-dtb
-          
