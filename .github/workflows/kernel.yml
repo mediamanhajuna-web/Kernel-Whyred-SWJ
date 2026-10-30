@@ -15,17 +15,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget unzip
 
-      - name: Download Toolchain Clang Stable
+      - name: Download and Extract Toolchain Clang
         run: |
           mkdir -p clang
-          wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/androidx-main/clang-r416183b.tar.gz -O clang.tar.gz || wget https://github.com/kdrag0n/proton-clang/archive/refs/heads/master.zip -O clang.zip
-          if [ -f clang.tar.gz ]; then tar -C clang -xzf clang.tar.gz; fi
-          if [ -f clang.zip ]; then unzip clang.zip && mv proton-clang-*/* clang/; fi
+          wget https://github.com/kdrag0n/proton-clang/archive/refs/heads/master.zip -O clang.zip
+          unzip -q clang.zip
+          mv proton-clang-*/* clang/
 
       - name: Download Kernel Source Whyred via Zip
         run: |
           wget https://github.com/whyred-defian/kernel_xiaomi_whyred/archive/refs/heads/lineage-20.zip -O kernel.zip || wget https://github.com/stormbreaker-project/kernel_xiaomi_whyred/archive/refs/heads/master.zip -O kernel.zip
-          unzip kernel.zip
+          unzip -q kernel.zip
           mv kernel_xiaomi_whyred-* kernel || mv kernel_-* kernel
 
       - name: Setup KernelSU-Next
