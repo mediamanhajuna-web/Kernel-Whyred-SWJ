@@ -1,0 +1,45 @@
+name: Build Whyred Kernel with KernelSU-Next
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget
+
+      - name: Download Toolchain Clang
+        run: |
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b.git clang
+
+      - name: Download Kernel Source Whyred
+        run: |
+          git clone --depth=1 https://github.com/stormbreaker-project/kernel_xiaomi_whyred.git -b twelve kernel
+
+      - name: Setup KernelSU-Next
+        run: |
+          cd kernel
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s v1.0.0
+
+      - name: Compile Kernel
+        run: |
+          cd kernel
+          export PATH="$(pwd)/../clang/bin:$PATH"
+          export ARCH=arm64
+          export SUBARCH=arm64
+          make O=out whyred_defconfig
+          make -j$(nproc) O=out CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+      - name: Upload Kernel Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: Whyred-KernelSU-Next-Image
+          path: kernel/out/arch/arm64/boot/Image.gz-dtb
+          
