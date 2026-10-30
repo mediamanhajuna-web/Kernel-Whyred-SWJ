@@ -26,7 +26,6 @@ jobs:
         run: |
           wget https://github.com/whyred-defian/kernel_xiaomi_whyred/archive/refs/heads/lineage-20.zip -O kernel.zip || wget https://github.com/stormbreaker-project/kernel_xiaomi_whyred/archive/refs/heads/master.zip -O kernel.zip
           unzip -q kernel.zip
-          # Merapikan nama folder hasil ekstrak agar konsisten bernama 'kernel'
           rm -rf kernel
           mv whyred-defian-kernel_xiaomi_whyred-* kernel || mv kernel_xiaomi_whyred-* kernel || mv kernel-master kernel || true
 
