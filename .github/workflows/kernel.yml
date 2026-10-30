@@ -15,11 +15,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget unzip
 
-      - name: Download Toolchain Clang via Zip
+      - name: Download Toolchain Clang Universal
         run: |
-          wget https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b/archive/refs/heads/main.zip -O clang.zip || wget https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b/archive/refs/heads/master.zip -O clang.zip
-          unzip clang.zip
-          mv android_prebuilts_clang_host_linux-x86_clang-* clang
+          mkdir -p clang
+          wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r416183b.tar.gz -O clang.tar.gz || wget https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b/archive/refs/tags/android-12.0.0_r1.zip -O clang.zip
+          if [ -f clang.tar.gz ]; then tar -C clang -xzf clang.tar.gz; fi
+          if [ -f clang.zip ]; then unzip clang.zip && mv android_prebuilts_clang_host_linux-x86_clang-*/* clang/; fi
 
       - name: Download Kernel Source Whyred via Zip
         run: |
@@ -38,4 +39,4 @@ jobs:
           export PATH="$(pwd)/../clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
-          make O=out whyred_def
+          make O=out why
