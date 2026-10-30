@@ -13,15 +13,17 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget
+          sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget unzip
 
       - name: Clone Toolchain Clang
         run: |
           git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b.git clang
 
-      - name: Clone Kernel Source Whyred Alternative
+      - name: Download Kernel Source Whyred via Zip
         run: |
-          git clone --depth=1 https://github.com/Whyred-Codenames/android_kernel_xiaomi_msm8953.git -b lineage-20 kernel || git clone --depth=1 https://github.com/stormbreaker-project/kernel_xiaomi_whyred.git kernel
+          wget https://github.com/stormbreaker-project/kernel_xiaomi_whyred/archive/refs/heads/twelve.zip -O kernel.zip || wget https://github.com/stormbreaker-project/kernel_xiaomi_whyred/archive/refs/heads/master.zip -O kernel.zip
+          unzip kernel.zip
+          mv kernel_xiaomi_whyred-* kernel
 
       - name: Setup KernelSU-Next
         run: |
