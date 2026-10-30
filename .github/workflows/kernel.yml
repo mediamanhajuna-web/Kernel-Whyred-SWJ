@@ -13,14 +13,31 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget
+          sudo apt-get install -y bc bison build-essential ccache flex libssl-dev zlib1g-dev git wget unzip
 
-      - name: Prepare Dummy Kernel Tree for Test
+      - name: Clone Toolchain Clang
         run: |
-          echo "Membuat struktur direktori kernel pengujian..."
-          mkdir -p kernel/out/arch/arm64/boot
-          # Membuat file dummy Image.gz-dtb agar workflow sukses sampai tahap akhir
-          echo "Test KernelSU-Next Build Success" > kernel/out/arch/arm64/boot/Image.gz-dtb
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r416183b.git clang
+
+      - name: Download Kernel Source Whyred via Zip
+        run: |
+          wget https://github.com/whyred-defian/kernel_xiaomi_whyred/archive/refs/heads/lineage-20.zip -O kernel.zip || wget https://github.com/stormbreaker-project/kernel_xiaomi_whyred/archive/refs/heads/master.zip -O kernel.zip
+          unzip kernel.zip
+          mv kernel_xiaomi_whyred-* kernel || mv kernel_- * kernel
+
+      - name: Setup KernelSU-Next
+        run: |
+          cd kernel
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s v1.0.0
+
+      - name: Compile Kernel
+        run: |
+          cd kernel
+          export PATH="$(pwd)/../clang/bin:$PATH"
+          export ARCH=arm64
+          export SUBARCH=arm64
+          make O=out whyred_defconfig
+          make -j$(nproc) O=out CC=clang CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
       - name: Upload Kernel Image
         uses: actions/upload-artifact@v4
