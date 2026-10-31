@@ -1,4 +1,4 @@
-name: Compile Kernel Redmi Note 5 (Whyred)
+name: Compile Kernel Redmi Note 5 (Whyred) By SAWIJU
 
 on:
   workflow_dispatch:
