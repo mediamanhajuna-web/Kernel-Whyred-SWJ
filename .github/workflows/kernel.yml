@@ -1,3 +1,50 @@
+name: Compile Kernel Redmi Note 5 (Whyred)
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_url:
+        description: 'URL Repository Kernel'
+        required: true
+        default: 'https://github.com/ArrowOS-Devices/android_kernel_xiaomi_whyred'
+      kernel_branch:
+        description: 'Branch Kernel'
+        required: true
+        default: 'arrow-12.1'
+      kernel_defconfig:
+        description: 'Nama Defconfig'
+        required: true
+        default: 'whyred_defconfig'
+      kernel_name:
+        description: 'Nama Custom Kernel'
+        required: false
+        default: 'CustomKernel-Whyred'
+
+jobs:
+  build:
+    name: Build Kernel Whyred
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Workflow
+        uses: actions/checkout@v4
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bc bison flex libssl-dev \
+            libelf-dev git ccache zip curl lz4 liblz4-tool python2 python3 \
+            libncurses5-dev libncursesw5-dev
+          sudo ln -sf /usr/bin/python3 /usr/bin/python || true
+
+      - name: Download Proton Clang Toolchain
+        run: |
+          git clone --depth=1 https://github.com/kdrag0n/proton-clang.git -b master clang
+
+      - name: Clone Kernel Source
+        run: |
+          git clone --depth=1 ${{ github.event.inputs.kernel_url }} -b ${{ github.event.inputs.kernel_branch }} kernel_src
+
       - name: Compile Kernel
         run: |
           cd kernel_src
@@ -18,7 +65,6 @@
           elif [ -f "arch/arm64/configs/vendor/whyred_defconfig" ]; then
             TARGET_DEF="vendor/whyred_defconfig"
           else
-            # Cari file defconfig apapun yang ada kata 'whyred'
             FOUND=$(find arch/arm64/configs -type f -name "*whyred*defconfig" | head -n 1)
             if [ -n "$FOUND" ]; then
               TARGET_DEF="${FOUND#arch/arm64/configs/}"
@@ -41,3 +87,34 @@
             CLANG_TRIPLE=aarch64-linux-gnu- \
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+      - name: Check Output Kernel
+        run: |
+          if [ -f "kernel_src/out/arch/arm64/boot/Image.gz-dtb" ]; then
+            echo "IMAGE_PATH=kernel_src/out/arch/arm64/boot/Image.gz-dtb" >> $GITHUB_ENV
+            echo "Kernel Image.gz-dtb berhasil ditemukan!"
+          elif [ -f "kernel_src/out/arch/arm64/boot/Image.gz" ]; then
+            echo "IMAGE_PATH=kernel_src/out/arch/arm64/boot/Image.gz" >> $GITHUB_ENV
+            echo "Kernel Image.gz berhasil ditemukan!"
+          else
+            echo "Kernel Image gagal dibuat!"
+            exit 1
+          fi
+
+      - name: Package with AnyKernel3
+        run: |
+          git clone https://github.com/osm0sis/AnyKernel3.git -b master anykernel
+          sed -i 's/device.name1=.*/device.name1=whyred/g' anykernel/anykernel.sh
+          sed -i 's/device.name2=.*/device.name2=whyred_global/g' anykernel/anykernel.sh
+          cp ${{ env.IMAGE_PATH }} anykernel/Image.gz-dtb 2>/dev/null || cp ${{ env.IMAGE_PATH }} anykernel/Image.gz
+          cd anykernel
+          BUILD_DATE=$(date +'%Y%m%d_%H%M')
+          ZIP_NAME="${{ github.event.inputs.kernel_name }}-${BUILD_DATE}.zip"
+          zip -r9 "../${ZIP_NAME}" * -x .git README.md *placeholder
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Upload Kernel Flashable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP_NAME }}
+          path: ${{ env.ZIP_NAME }}
